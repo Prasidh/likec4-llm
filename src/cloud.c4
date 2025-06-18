@@ -1,0 +1,79 @@
+specification {
+  element person
+  element softwareSystem
+  element container
+  element deploymentNode
+
+  tag user { style { color #0d5093; shape person } }
+  tag onprem { style { color #34495e } }
+  tag aws_vpc { style { color #FF9900; shape roundedBox } }
+  tag subnet { style { color #FAD7A0 } }
+  tag external_saas { style { color #7C3AED } }
+  tag database { style { color #156294; shape cylinder } }
+  tag firewall { style { color #c0392b; shape hexagonal } }
+}
+
+model {
+  // --- People and Key External Systems ---
+  dev_user = person 'Developer' 'Network ID: User Space (Dev)' { tags = [user] }
+  server_space = person 'Server Space' 'Network ID: Server Space (Dev)' { tags = [user] }
+
+  mongo_atlas = softwareSystem 'MongoDB Atlas' 'Network ID: vpc-cnc-aws-mms-dev-lops' { tags = [external_saas] }
+  confluent_cloud = softwareSystem 'Confluent Cloud Kafka' 'Network ID: dev-us-plc-1a-abc.us-east-1.aws.confluent.cloud' { tags = [external_saas] }
+  centera_ldap_1 = softwareSystem 'Centera LDAP 1' 'Network ID: ldap-roc.centera.com' { tags = [external_saas] }
+  centera_ldap_2 = softwareSystem 'Centera LDAP 2' 'Network ID: ldap-buf.centera.com' { tags = [external_saas] }
+  centera_ldap_3 = softwareSystem 'Centera LDAP 3' 'Network ID: ldap-alt.centera.com' { tags = [external_saas] }
+
+  // --- On-Premise Data Center ---
+  onprem_dc = deploymentNode 'On-Premise Data Center' {
+    tags = [onprem]
+    dfl_ckp = softwareSystem 'On-Prem Services' 'Network ID: DFL-CKP'
+  }
+
+  // --- Main AWS Cloud Infrastructure ---
+  aws_vpc = deploymentNode 'AWS VPC' 'Network ID: VPC (CKP AWS)-cnc-aws-iapp-dev-mch-ans-development-01' {
+    tags = [aws_vpc]
+
+    app_subnet = deploymentNode 'App Subnet' {
+      tags = [subnet]
+      api_server = container 'API Server' 'Network ID: an-aws-iapp-dev-mch-ans-development-01'
+    }
+
+    db_subnet = deploymentNode 'DB Subnet' {
+      tags = [subnet]
+      casenet_db = softwareSystem 'CaseNet SQL DB' 'Network ID: CNCDWTCSQ1003' {
+        technology = 'Microsoft SQL'
+        tags = [database]
+      }
+      teradata_db = softwareSystem 'TeraData Vantage' 'Network ID: TeraData Vantage' {
+        technology = 'TeraData'
+        tags = [database]
+      }
+    }
+  }
+
+  // --- Relationships / Firewall Rules ---
+  // Egress to On-Prem & SaaS
+  aws_vpc.app_subnet.api_server -> onprem_dc.dfl_ckp 'Communications to onsite services (TCP 443)'
+  aws_vpc.app_subnet.api_server -> confluent_cloud 'Broker list for Kafka connection (TCP 2024)'
+  aws_vpc.app_subnet.api_server -> confluent_cloud 'Kafka cluster - Confluent Cloud (Shared) (TCP 9092)'
+  aws_vpc.app_subnet.api_server -> centera_ldap_1 'Centera LDAP (UDP 636)'
+  aws_vpc.app_subnet.api_server -> centera_ldap_2 'Centera LDAP (UDP 636)'
+  aws_vpc.app_subnet.api_server -> centera_ldap_3 'Centera LDAP (UDP 636)'
+
+  // User/Server Space to Cloud
+  dev_user -> mongo_atlas 'Mongo Atlas (TCP 1024-1028)'
+  server_space -> mongo_atlas 'Mongo Atlas (TCP 1024-1028, 9226)'
+
+  // Internal East-West Traffic
+  aws_vpc.app_subnet.api_server -> aws_vpc.db_subnet.casenet_db 'CaseNet / TC Classic - Microsoft SQL (TCP 1433)'
+  aws_vpc.app_subnet.api_server -> aws_vpc.db_subnet.teradata_db 'TeraData Vantage (TCP 1021)'
+}
+
+views {
+  view SimplifiedFirewallView {
+    title 'Simplified Hybrid Cloud Network View'
+    include *
+    autoLayout TopBottom
+  }
+}

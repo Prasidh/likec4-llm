@@ -1,0 +1,19 @@
+{
+  "name": "likec4-starter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "likec4 start",
+    "dev": "likec4 serve",
+    "build": "likec4 build",
+    "export:png": "likec4 export png -o ./png",
+    "export:json": "likec4 export json --outfile ./dist/model.json"
+  },
+  "devDependencies": {
+    "likec4": "*"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
