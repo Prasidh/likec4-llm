@@ -5,42 +5,77 @@
       "target": "server_space",
       "port": "22",
       "protocol": "TCP",
-      "purpose": "Allow SSH access for development activities"
+      "purpose": "SSH access for development"
     },
     {
       "source": "dev_user",
       "target": "mongo_atlas",
       "port": "27017",
       "protocol": "TCP",
-      "purpose": "Allow MongoDB connections for data access"
+      "purpose": "Database access for development"
+    },
+    {
+      "source": "server_space",
+      "target": "mongo_atlas",
+      "port": "27017",
+      "protocol": "TCP",
+      "purpose": "Server access to MongoDB"
     },
     {
       "source": "dev_user",
       "target": "confluent_cloud",
       "port": "9092",
       "protocol": "TCP",
-      "purpose": "Allow Kafka connections for message publishing and consuming"
+      "purpose": "Kafka message streaming"
     },
     {
-      "source": "centera_ldap_1",
+      "source": "server_space",
+      "target": "confluent_cloud",
+      "port": "9092",
+      "protocol": "TCP",
+      "purpose": "Server access to Kafka"
+    },
+    {
+      "source": "dev_user",
+      "target": "centera_ldap_1",
+      "port": "389",
+      "protocol": "TCP",
+      "purpose": "LDAP authentication"
+    },
+    {
+      "source": "dev_user",
       "target": "centera_ldap_2",
       "port": "389",
       "protocol": "TCP",
-      "purpose": "Allow LDAP communication between Centera LDAP servers"
+      "purpose": "LDAP authentication"
     },
     {
-      "source": "centera_ldap_1",
+      "source": "dev_user",
       "target": "centera_ldap_3",
       "port": "389",
       "protocol": "TCP",
-      "purpose": "Allow LDAP communication between Centera LDAP servers"
+      "purpose": "LDAP authentication"
     },
     {
-      "source": "centera_ldap_2",
+      "source": "server_space",
+      "target": "centera_ldap_1",
+      "port": "389",
+      "protocol": "TCP",
+      "purpose": "LDAP authentication for server"
+    },
+    {
+      "source": "server_space",
+      "target": "centera_ldap_2",
+      "port": "389",
+      "protocol": "TCP",
+      "purpose": "LDAP authentication for server"
+    },
+    {
+      "source": "server_space",
       "target": "centera_ldap_3",
       "port": "389",
       "protocol": "TCP",
-      "purpose": "Allow LDAP communication between Centera LDAP servers"
+      "purpose": "LDAP authentication for server"
     }
   ]
 }
