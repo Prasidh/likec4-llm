@@ -1,103 +1,99 @@
-# C4 Model to Docs Generator
+# 🔐 C4 Model to Firewall Documentation (LikeC4 + MCP + OpenAI)
+This project uses a LikeC4-based architecture model to automatically generate network firewall documentation. The workflow uses an LLM (via OpenAI) to infer and describe necessary firewall rules by analyzing your system's relationships and producing clean, human-readable output in Markdown and JSON.
 
-This project transforms LikeC4 architecture models into human-readable firewall rule documentation. By treating your LikeC4 `.c4` files as the source of truth, the system ensures your network documentation stays aligned with your evolving architecture.
+## ⚙️ Setup Instructions
+### 1. 📦 Prerequisites
+Make sure the following versions are installed on your system:
 
-The pipeline uses a Python script to:
-- Export your LikeC4 model to structured JSON,
-- Parse and interpret system relationships,
-- Query the OpenAI API to infer necessary firewall rules,
-- And generate a clean, version-controllable Markdown table.
+- Node.js: v22.16.0
+- Python: 3.13.3
+- VSCode with LikeC4 Extension installed
 
-This approach minimizes manual effort and maximizes architectural clarity—making your infrastructure both visual and actionable.
-
----
-
-## 📁 File Structure
-
-The project is organized to separate the source model, the generation script, and the output artifacts.
-
+### 2. 📁 Project Structure
 ```
 .
 ├── src/
-│   ├── cloud.c4              # The source LikeC4 model defining your architecture.
-│   └── generate_table.py     # The main Python script to orchestrate the process.
-│
+│   └── cloud.c4          # Your LikeC4 source model with systems, nodes, and connections
 ├── dist/
-│   ├── model.json            # The auto-generated JSON export of the LikeC4 model.
-│   └── FirewallRules.md      # The final, auto-generated firewall rules table.
-│
-├── .env                      # Local environment variables (contains API keys).
-├── package.json              # Node.js dependencies for LikeC4.
-└── requirements.txt          # Python dependencies for the generation script.
+│   ├── FirewallRules.md  # Auto-generated markdown table with firewall rules
+│   └── firewall_rules.json # Auto-generated JSON representation of rules
+├── mcp_client.py         # Python script that communicates with the MCP server
+├── .env                  # Your local secrets and environment variables
+├── package.json          # Node.js dependencies (for LikeC4 export, if needed)
+├── requirements.txt      # Python dependencies
+└── README.md            # This file
 ```
 
----
-
-## ⚙️ How It Works
-
-The process follows a simple, automated pipeline:
-
-1. **Export Model**  
-   The Python script executes `npm run export:json`, using the LikeC4 CLI to compile your `.c4` architecture into a structured JSON format (`dist/model.json`).
-
-2. **Parse & Filter**  
-   The script reads the exported JSON and extracts the components and their interconnections—especially focusing on elements relevant to firewall rules such as data flow, source, and destination.
-
-3. **LLM Inference**  
-   This filtered data is sent to OpenAI's API (`gpt-4o-mini`) with a prompt designed to simulate a network engineer's reasoning. The LLM infers the correct ports, protocols, and communication paths, returning a structured JSON object.
-
-4. **Format Output**  
-   The response is parsed and cleaned.
-
-5. **Generate Table**  
-   Finally, a Markdown table is generated and saved in `dist/FirewallRules.md`.
-
----
-
-## 🧰 Setup
-
-Follow these steps to set up the project on your local machine.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (LTS version recommended)  
-- [Python](https://www.python.org/) (3.8 or newer)
-
-### 1. Install Dependencies
+### 3. 🧪 Virtual Environment & Python Dependencies
+Use a virtual environment to isolate dependencies:
 
 ```bash
-# Install Node.js packages (for LikeC4)
-npm install
+# Create virtual environment
+python -m venv env
 
-# Install Python packages
+# Activate (Windows)
+env\Scripts\activate
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
+## ⚡ Setup MCP Server with LikeC4
+1. Open the project in VSCode
+2. Install the LikeC4 extension (from Marketplace)
+3. Press `Ctrl + ,` to open Settings
+4. Search for "mcp"
+5. Open the LikeC4 section
+6. Make sure ✅ Enable MCP Server is checked
+7. Confirm the MCP server is using port `33335` (default)
 
-Create a `.env` file in the project root with your OpenAI API key:
+Your config should look like:
 
+```json
+{
+  "servers": {
+    "likec4": {
+      "type": "sse",
+      "url": "http://localhost:33335/sse"
+    }
+  }
+}
 ```
-OPENAI_API_KEY="sk-YourSecretApiKeyHere"
+
+Update your `.env` file accordingly:
+
+```ini
+OPENAI_API_KEY="sk-YourOpenAIKeyHere"
+OPENAI_MODEL="gpt-4o"  # or gpt-4o-mini, etc.
 ```
 
----
-
-## 🚀 Execution
-
-To generate the firewall rules documentation, run:
+## 🚀 Run the MCP Client Script
+Once everything is configured, generate your firewall documentation:
 
 ```bash
-python src/generate_table.py
+python mcp_client.py
 ```
 
-The script prints progress logs to the console. After completion, check the `dist/FirewallRules.md` file for the updated rules table.
+This will:
+- Connect to the MCP server via SSE
+- Fetch the SimplifiedFirewallView view from your LikeC4 `.c4` model
+- Extract all relationships (source → destination)
+- Ask OpenAI to infer firewall rules (port, protocol, description)
+- Save output to:
+  - `dist/FirewallRules.md` (Markdown)
+  - `dist/firewall_rules.json` (JSON)
 
-To regenerate the table after changes, just update `src/cloud.c4` and rerun the script.
+## 📊 Example Output (Markdown)
 
----
+| Source             | Port               | Destination               | Description                          |
+|--------------------|--------------------|---------------------------|--------------------------------------|
+| User Space (Dev)   | TCP 1024-1028      | vpc-cnc-aws-mms-dev-lops  | Mongo Atlas (TCP 1024-1028)          |
+| Server Space (Dev) | TCP 1024-1028,9226 | vpc-cnc-aws-mms-dev-lops  | Mongo Atlas (TCP 1024-1028, 9226)    |
 
-## 🧠 Powered by
+## 🧠 Powered By
+- LikeC4 — visual modeling for modern architecture
+- OpenAI GPT — inference for rule generation
+- VSCode MCP Extension
 
-- [LikeC4](https://likec4.dev) — to model and visualize your architecture
-- [OpenAI GPT](https://platform.openai.com) — to reason about system communication
+## 🙌 Contributions
+Feel free to fork, submit PRs, or open issues for improvements. This tool was built to automate and simplify cloud firewall documentation using AI.
