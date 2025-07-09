@@ -1,0 +1,133 @@
+specification {
+  element actor
+  element softwareSystem
+  element container
+  element component
+  element externalSystem
+}
+
+model {
+  dataAnalyst = actor 'Data Analyst' {
+    description 'Builds and runs data models to gain insights into data.'
+  }
+
+  supportEngineer = actor 'Support Engineer' {
+    description 'Manages user accounts and troubleshoots issues through the Admin Portal.'
+  }
+
+  quantumLeap = softwareSystem 'QuantumLeap Analytics' {
+    tags 'saas'
+    description 'A multi-tenant SaaS platform for data analytics.'
+
+    webApp = container 'Web App' {
+      technology 'React'
+      description 'The main user interface for data analysts to interact with the platform.'
+    }
+
+    apiGateway = container 'API Gateway' {
+      technology 'Node.js, Apollo Server'
+      description 'Routes client GraphQL requests to backend services.'
+    }
+
+    authService = container 'Authentication Service' {
+      technology 'Go'
+      description 'Manages user identity, authentication, and permissions.'
+
+      jwtIssuer = component 'JWT Issuer' {
+        description 'Issues and validates JSON Web Tokens for secure sessions.'
+      }
+    }
+
+    queryEngineService = container 'Query Engine Service' {
+      technology 'Python'
+      description 'Executes user-submitted data models against the Data Warehouse.'
+    }
+
+    jobSchedulerService = container 'Job Scheduler Service' {
+      technology 'Java'
+      description 'Manages long-running asynchronous tasks using a job queue.'
+
+      redisQueue = component 'Redis Job Queue' {
+        description 'Queue for job management, ensuring reliable scheduling of tasks using Redis.'
+        technology 'Redis'
+      }
+    }
+
+    adminPortal = container 'Admin Portal' {
+      technology 'Angular'
+      description 'Used by support engineers to manage user accounts and troubleshoot issues.'
+    }
+
+    postgresDB = container 'PostgreSQL Database' {
+      technology 'PostgreSQL'
+      description 'Stores user data, permissions, and metadata about data models.'
+    }
+
+    dataWarehouse = container 'Data Warehouse' {
+      technology 'Amazon Redshift'
+      description 'Houses large datasets for analytics and modeling.'
+    }
+  }
+
+  stripe = externalSystem 'Stripe' {
+    description 'Handles customer subscriptions and payment processing.'
+  }
+
+  datadog = externalSystem 'Datadog' {
+    description 'External monitoring platform for observing system metrics and logs.'
+  }
+
+  // Relationships
+  dataAnalyst -> quantumLeap.webApp 'Uses'
+  quantumLeap.webApp -> quantumLeap.apiGateway 'Sends GraphQL requests to'
+  quantumLeap.apiGateway -> quantumLeap.authService 'Handles authentication requests through'
+  quantumLeap.authService -> quantumLeap.postgresDB 'Reads/writes user data from/to'
+  quantumLeap.apiGateway -> quantumLeap.queryEngineService 'Forwards data model execution requests to'
+  quantumLeap.queryEngineService -> quantumLeap.dataWarehouse 'Executes queries against'
+  quantumLeap.apiGateway -> quantumLeap.jobSchedulerService 'Sends asynchronous task requests to'
+  quantumLeap.jobSchedulerService.redisQueue -> quantumLeap.jobSchedulerService 'Uses for job management'
+  quantumLeap.apiGateway -> stripe 'Processes payments through'
+  quantumLeap.* -> datadog 'Sends logs and metrics to'
+
+  supportEngineer -> quantumLeap.adminPortal 'Uses for account management and troubleshooting'
+  quantumLeap.adminPortal -> quantumLeap.postgresDB 'Reads/writes user account and troubleshooting data from/to'
+}
+
+views {
+  view index {
+    title "System Landscape for QuantumLeap Analytics"
+    include *
+    autoLayout TopBottom
+  }
+
+  view containers of quantumLeap {
+    title "Container Diagram for QuantumLeap Analytics"
+    include *, quantumLeap.*
+    autoLayout LeftRight
+  }
+
+  view components of quantumLeap.authService {
+    title "Component Diagram for Authentication Service"
+    include *, quantumLeap.authService.*
+    autoLayout TopBottom
+  }
+
+  view components of quantumLeap.jobSchedulerService {
+    title "Component Diagram for Job Scheduler Service"
+    include *, quantumLeap.jobSchedulerService.*
+    autoLayout TopBottom
+  }
+
+  style * {
+    color secondary
+  }
+  style quantumLeap {
+    color primary
+  }
+  style dataAnalyst, supportEngineer {
+    color actor
+  }
+  style stripe, datadog {
+    color muted
+  }
+}
