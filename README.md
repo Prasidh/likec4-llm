@@ -1,7 +1,6 @@
-
 # 🔐 C4 Model to Firewall Documentation (LikeC4 + MCP + OpenAI)
 
-This project uses a LikeC4-based architecture model to automatically generate network firewall documentation. The workflow leverages a large language model (via OpenAI) to infer and describe firewall rules by analyzing your system's architecture and generating human-readable documentation in Markdown and JSON formats.
+This project uses a LikeC4-based architecture model to automatically generate network firewall documentation. The workflow leverages a large language model (via OpenAI) to infer and describe firewall rules by analyzing your system's architecture and generating human-readable documentation in Markdown and JSON formats. It also includes scripts to generate and edit C4 models directly from natural language prompts.
 
 ---
 
@@ -11,8 +10,8 @@ This project uses a LikeC4-based architecture model to automatically generate ne
 
 Make sure the following versions are installed on your system:
 
-- Node.js: v22.16.0  
-- Python: 3.13.3  
+- Node.js: v22.16.0
+- Python: 3.13.3
 - VSCode with LikeC4 Extension installed
 
 ---
@@ -22,16 +21,17 @@ Make sure the following versions are installed on your system:
 ```
 .
 ├── src/
-│   └── cloud.c4                 # Your LikeC4 source model with systems, nodes, and connections
+│   └── cloud.c4              # Your LikeC4 source model with systems, nodes, and connections
 ├── dist/
-│   ├── FirewallRules.md         # Auto-generated markdown table with firewall rules
-│   └── firewall_rules.json      # Auto-generated JSON representation of rules
-├── mcp_client.py               # Python script that communicates with the MCP server
-├── generate_models.py          # New script to auto-generate LikeC4 models using OpenAI
-├── .env                        # Your local secrets and environment variables
-├── package.json                # Node.js dependencies (for LikeC4 export, if needed)
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
+│   ├── FirewallRules.md      # Auto-generated markdown table with firewall rules
+│   └── firewall_rules.json   # Auto-generated JSON representation of rules
+├── mcp_client.py             # Python script that communicates with the MCP server
+├── generate_models.py        # Script to auto-generate new LikeC4 models using OpenAI
+├── edit_c4_model.py             # Script to edit existing LikeC4 models using OpenAI
+├── .env                      # Your local secrets and environment variables
+├── package.json              # Node.js dependencies (for LikeC4 export, if needed)
+├── requirements.txt          # Python dependencies
+└── README.md                 # This file
 ```
 
 ---
@@ -55,13 +55,13 @@ pip install -r requirements.txt
 
 ## ⚡ Setup MCP Server with LikeC4
 
-1. Open the project in VSCode  
-2. Install the LikeC4 extension (from Marketplace)  
-3. Press `Ctrl + ,` to open Settings  
-4. Search for "mcp"  
-5. Open the LikeC4 section  
-6. Enable ✅ MCP Server  
-7. Make sure it runs on port `33335`  
+1. Open the project in VSCode
+2. Install the LikeC4 extension (from Marketplace)
+3. Press `Ctrl + ,` to open Settings
+4. Search for "mcp"
+5. Open the LikeC4 section
+6. Enable ✅ MCP Server
+7. Make sure it runs on port `33335`
 
 Your `settings.json` should look like:
 
@@ -95,21 +95,23 @@ python mcp_client.py
 
 This will:
 
-- Connect to the MCP server via SSE  
-- Fetch the `SimplifiedFirewallView` from the LikeC4 `.c4` model  
-- Analyze system relationships  
-- Ask OpenAI to infer firewall rules  
+- Connect to the MCP server via SSE
+- Fetch the `SimplifiedFirewallView` from the LikeC4 `.c4` model
+- Analyze system relationships
+- Ask OpenAI to infer firewall rules
 - Output to:
   - `dist/FirewallRules.md`
   - `dist/firewall_rules.json`
 
 ---
 
-## 🧠 Generate LikeC4 Models from Natural Language
+## 🧠 AI-Powered Model Management
+
+### Generating New Models
 
 You can now auto-generate C4 models directly from descriptions using `generate_models.py`.
 
-### 🔧 Example Command:
+**Example Command:**
 
 ```bash
 python generate_models.py "Design a C4 model for a multi-tenant SaaS platform named 'QuantumLeap Analytics'." \
@@ -126,29 +128,32 @@ python generate_models.py "Design a C4 model for a multi-tenant SaaS platform na
 -o quantumleap_platform.c4
 ```
 
-This will generate a valid LikeC4 model file named `quantumleap_platform.c4`.
+### Editing Existing Models
+
+To modify an existing model, use the `edit_c4_model.py` script. It takes an input file and a prompt describing the desired changes.
+
+**Example Command:**
+
+This command edits the `quantumleap_platform.c4` file, adding a new "Billing Service" and updating the relationships accordingly. It saves the result to a new file to avoid overwriting the original.
+
+```bash
+python edit_model.py quantumleap_platform.c4 "Create a new container called 'Billing Service' with Go technology. This service should be responsible for all interactions with Stripe. Update the relationships so that the API Gateway calls the Billing Service, and the Billing Service calls Stripe." -o quantumleap_platform_v2.c4
+```
 
 ---
 
 ## 📊 Example Output (FirewallRules.md)
 
-| Source              | Port                 | Destination              | Description                          |
-|---------------------|----------------------|---------------------------|--------------------------------------|
-| User Space (Dev)    | TCP 1024-1028        | vpc-cnc-aws-mms-dev-lops | Mongo Atlas (TCP 1024-1028)          |
-| Server Space (Dev)  | TCP 1024-1028, 9226  | vpc-cnc-aws-mms-dev-lops | Mongo Atlas (TCP 1024-1028, 9226)    |
+| Source              | Port                  | Destination              | Description                          |
+|---------------------|-----------------------|--------------------------|--------------------------------------|
+| User Space (Dev)    | TCP 1024-1028         | vpc-cnc-aws-mms-dev-lops | Mongo Atlas (TCP 1024-1028)          |
+| Server Space (Dev)  | TCP 1024-1028, 9226   | vpc-cnc-aws-mms-dev-lops | Mongo Atlas (TCP 1024-1028, 9226)    |
 
 ---
 
 ## 💡 Powered By
 
-- **LikeC4** — Visual modeling for modern architecture  
-- **OpenAI GPT** — Inference for model and firewall rule generation  
+- **LikeC4** — Visual modeling for modern architecture
+- **OpenAI GPT** — Inference for model and firewall rule generation
 - **VSCode MCP Extension**
 
----
-
-## 🙌 Contributions
-
-Fork this project, submit PRs, or open issues — especially if you want to expand AI generation capabilities or support other C4 views.
-
----

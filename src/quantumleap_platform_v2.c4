@@ -38,6 +38,11 @@ model {
       }
     }
 
+    billingService = container 'Billing Service' {
+      technology 'Go'
+      description 'Responsible for all interactions with Stripe.'
+    }
+
     queryEngineService = container 'Query Engine Service' {
       technology 'Python'
       description 'Executes user-submitted data models against the Data Warehouse.'
@@ -77,10 +82,6 @@ model {
     description 'External monitoring platform for observing system metrics and logs.'
   }
 
-  salesforce = externalSystem 'Salesforce' {
-    description 'Customer Relationship Management platform for managing customer interactions.'
-  }
-
   // Relationships
   dataAnalyst -> quantumLeap.webApp 'Uses'
   quantumLeap.webApp -> quantumLeap.apiGateway 'Sends GraphQL requests to'
@@ -90,12 +91,12 @@ model {
   quantumLeap.queryEngineService -> quantumLeap.dataWarehouse 'Executes queries against'
   quantumLeap.apiGateway -> quantumLeap.jobSchedulerService 'Sends asynchronous task requests to'
   quantumLeap.jobSchedulerService.redisQueue -> quantumLeap.jobSchedulerService 'Uses for job management'
-  quantumLeap.apiGateway -> stripe 'Processes payments through'
+  quantumLeap.apiGateway -> quantumLeap.billingService 'Forwards payment processing requests to'
+  quantumLeap.billingService -> stripe 'Processes payments through'
   quantumLeap.* -> datadog 'Sends logs and metrics to'
 
   supportEngineer -> quantumLeap.adminPortal 'Uses for account management and troubleshooting'
   quantumLeap.adminPortal -> quantumLeap.postgresDB 'Reads/writes user account and troubleshooting data from/to'
-  quantumLeap.adminPortal -> salesforce 'Integrates with for customer interactions'
 }
 
 views {
@@ -132,7 +133,7 @@ views {
   style dataAnalyst, supportEngineer {
     color actor
   }
-  style stripe, datadog, salesforce {
+  style stripe, datadog {
     color muted
   }
 }
